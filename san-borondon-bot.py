@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 load_dotenv()
 # --- CONFIGURACIÓN PRINCIPAL ---
 TOKEN = os.getenv('DISCORD_TOKEN')
-CANAL_VOZ_ID = iny(os.getenv('CANAL_ID'))
+CANAL_VOZ_ID = int(os.getenv('CANAL_ID'))
 COOLDOWN_SEGUNDOS = 900  # 10 minutos
 
 intents = discord.Intents.default()
