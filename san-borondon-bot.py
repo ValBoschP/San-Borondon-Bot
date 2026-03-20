@@ -1,29 +1,26 @@
 import discord
 import os
+import random 
 from discord.ext import commands, tasks
 from dotenv import load_dotenv
 
 load_dotenv()
-# --- CONFIGURACIÓN PRINCIPAL ---
+
 TOKEN = os.getenv('DISCORD_TOKEN')
 CANAL_VOZ_ID = int(os.getenv('CANAL_ID'))
-COOLDOWN_SEGUNDOS = 900  # 10 minutos
+COOLDOWN_SEGUNDOS = 600
 
 intents = discord.Intents.default()
 bot = commands.Bot(command_prefix='!', intents=intents)
 
-canal_visible = True 
-
 @bot.event
 async def on_ready():
     print(f'Bot conectado exitosamente como {bot.user}')
-    if not alternar_visibilidad.is_running():
-        alternar_visibilidad.start()
+    if not visibilidad_aleatoria.is_running():
+        visibilidad_aleatoria.start()
 
 @tasks.loop(seconds=COOLDOWN_SEGUNDOS)
-async def alternar_visibilidad():
-    global canal_visible
-    
+async def visibilidad_aleatoria():
     canal = bot.get_channel(CANAL_VOZ_ID)
     
     if not canal:
@@ -32,17 +29,15 @@ async def alternar_visibilidad():
 
     rol_everyone = canal.guild.default_role
 
+    hacer_visible = random.choice([True, False])
+
     try:
-        if canal_visible:
-            # Ocultamos el canal
-            await canal.set_permissions(rol_everyone, view_channel=False)
-            print("Canal ocultado.")
-            canal_visible = False
-        else:
-            # Mostramos el canal
+        if hacer_visible:
             await canal.set_permissions(rol_everyone, view_channel=True)
-            print("Canal visible.")
-            canal_visible = True
+            print("El canal ahora es VISIBLE.")
+        else:
+            await canal.set_permissions(rol_everyone, view_channel=False)
+            print("El canal ahora está OCULTO.")
             
     except discord.Forbidden:
         print("Error: El bot no tiene permiso de 'Gestionar Canales'.")
