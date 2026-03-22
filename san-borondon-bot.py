@@ -47,7 +47,7 @@ async def explorar(ctx):
     if tirada <= probabilidad_exito:
        
         is_visible = True
-        await ctx.send(f"@everyone\nQue locura, {ctx.author.mention}. Encontraste a San Borondon, brutal. \n**Tienen 10 minutos para entrar al canal antes de que vuelva a desaparecer**")
+        await ctx.send(f"Que locura, {ctx.author.mention}. Encontraste a San Borondon, brutal. \n**Tienen 10 minutos para entrar al canal antes de que vuelva a desaparecer**")
         
         canal = bot.get_channel(CANAL_VOZ_ID)
         rol_everyone = ctx.guild.default_role
