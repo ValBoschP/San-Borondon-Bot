@@ -10,6 +10,9 @@ load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 CANAL_VOZ_ID = int(os.getenv('CANAL_ID'))
 
+categorias_texto = os.getenv('CATEGORIAS_PROHIBIDAS', '')
+CATEGORIAS_PROHIBIDAS = [categoria.strip() for categoria in categorias_texto.split(',') if categoria.strip()]
+
 intents = discord.Intents.default()
 intents.message_content = True 
 
@@ -19,7 +22,8 @@ is_visible = False
 
 @bot.event
 async def on_ready():
-    print(f'✅ Bot conectado exitosamente como {bot.user}')
+    print(f'✅ Bot conectado como {bot.user}')
+    print(f'Categorías protegidas (Lista negra): {CATEGORIAS_PROHIBIDAS}')
     
     canal = bot.get_channel(CANAL_VOZ_ID)
     if canal:
@@ -43,7 +47,7 @@ async def explorar(ctx):
     if tirada <= probabilidad_exito:
        
         is_visible = True
-        await ctx.send(f"Que locura, {ctx.author.mention}. Encontraste a San Borondon, brutal. \n**Tienen 10 minutos para entrar al canal antes de que vuelva a desaparecer**")
+        await ctx.send(f"@everyone\nQue locura, {ctx.author.mention}. Encontraste a San Borondon, brutal. \n**Tienen 10 minutos para entrar al canal antes de que vuelva a desaparecer**")
         
         canal = bot.get_channel(CANAL_VOZ_ID)
         rol_everyone = ctx.guild.default_role
@@ -54,6 +58,16 @@ async def explorar(ctx):
         
         await canal.set_permissions(rol_everyone, view_channel=False)
         is_visible = False
+
+        categorias_validas = [cat for cat in ctx.guild.categories if cat.name not in CATEGORIAS_PROHIBIDAS]
+
+        if categorias_validas:
+            nueva_categoria = random.choice(categorias_validas)
+            await canal.edit(category=nueva_categoria)
+            print(f"La isla ha se movió a la categoría: {nueva_categoria.name}")
+        else:
+            print("Aviso: No se encontraron categorías válidas para mover la isla.")
+
         await ctx.send("La niebla tal ha vuelto, no se ve un carajo. San Borondón ha desaparecido")
         
     else:
