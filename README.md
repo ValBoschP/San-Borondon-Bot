@@ -1,49 +1,44 @@
-# San-Borondon-Bot
-Un bot de Discord ligero y automatizado construido en Python. Su funcion principal es alternar la visibilidad de un canal de voz especifico en intervalos de tiempo regulares, ocultandolo y mostrandolo al rol general del servidor.
+# San Borondon Bot
 
-Es una herramienta ideal para gestionar canales temporales, eventos programados o limitar el acceso a ciertas areas del servidor de forma intermitente.
+Un bot de Discord interactivo construido en Python, inspirado en la leyenda canaria de la isla errante. Este bot gestiona un canal de voz oculto que los usuarios deben "descubrir" mediante comandos. Si tienen exito, la isla se revela temporalmente antes de volver a desaparecer y moverse a una nueva ubicacion al azar dentro del servidor.
 
 ## Caracteristicas Principales
-
-- Alternancia automatica de los permisos de visualizacion (`view_channel`) para el rol `@everyone`.
-- Ejecucion autonoma en segundo plano utilizando la extension `tasks` de `discord.py`.
-- Configuracion segura: protege el Token del bot y el ID del canal utilizando variables de entorno (`.env`).
+- **Minijuego de exploracion:** Los usuarios utilizan el comando `!explorar` para intentar encontrar la isla, basado en un sistema de probabilidad (por defecto 5% de exito).
+- **Cooldowns individuales:** Limita el uso del comando a una vez cada 30 minutos por usuario para evitar el spam de comandos.
+- **Visibilidad temporal y alertas:** Al ser descubierta, la isla se hace visible durante 10 minutos y notifica a todo el servidor mediante una mencion.
+- **Isla errante:** Cuando la niebla vuelve a cubrir San Borondon (pasados los 10 minutos), el canal se mueve automaticamente a una categoria aleatoria del servidor.
+- **Lista negra de categorias:** Permite excluir categorias especificas (como zonas de administracion o canales de depuracion) mediante configuracion para que el canal nunca aparezca alli.
+- **Seguridad:** Protege las credenciales y configuraciones sensibles utilizando un archivo `.env`.
 
 ## Requisitos Previos
-
-Antes de ejecutar este bot, necesitaras:
-
-- Python 3.8 o superior instalado en tu sistema.
-- Una aplicacion de bot creada en el Discord Developer Portal (con los permisos de "Manage Channels" y "Manage Roles").
-- El Token secreto de tu bot.
-- El ID numerico del canal de voz que deseas controlar (requiere tener el Modo Desarrollador activo en tu cliente de Discord).
+- Python 3.8 o superior.
+- Una aplicacion de bot en el Discord Developer Portal con los permisos de "Manage Channels" y "Manage Roles".
+- El **Message Content Intent** activado en la pestaña "Bot" del portal de desarrolladores de Discord.
 
 ## Instalacion y Configuracion
+1. Clona o descarga este repositorio en tu maquina local.
 
-1. Clona este repositorio en tu maquina local o descarga los archivos.
-
-2. Abre una terminal en la carpeta del proyecto e instala las dependencias necesarias ejecutando:
-  ```bash
+2. Instala las dependencias necesarias abriendo tu terminal y ejecutando:
+   ```bash
    pip install discord.py python-dotenv
-  ```
-3. Crea un archivo llamado exactamente `.env` en la raiz del directorio del proyecto.
-4. Abre el archivo `.env` con un editor de texto y añade tus datos sin usar comillas:
    ```
-   DISCORD_TOKEN=tu_token_aqui
-   CHANNEL_ID=id_del_canal_aqui
-   ```
-_Nota: El repositorio incluye un archivo `.gitignore` configurado para ignorar el `.env`, garantizando que tus credenciales nunca se suban a GitHub._
+3. Crea un archivo `.env` en la raiz del proyecto.
+4. Añade tu configuracion al archivo `.env` sin usar comillas. Separa las categorias prohibidas por comas:
+    ```PLAINTEXT
+    DISCORD_TOKEN=tu_token_aqui
+    CANAL_ID=123456789012345678
+    CATEGORIAS_PROHIBIDAS=Categoria1,Categoria2,Categoria3
+    ```
 
 ## Uso
-Para poner en marcha el bot, navega hasta el directorio del proyecto en tu terminal y ejecuta:
+Inicia el bot ejecutando el siguiente comando en tu terminal:
 ```bash
 python san-borondon-bot.py
 ```
-Si la configuracion es correcta, la consola mostrara un mensaje indicando que el bot se ha conectado exitosamente y el ciclo de alternancia de visibilidad comenzara de inmediato.
+Una vez encendido, los usuarios podran interactuar con el bot escribiendo el comando `!explorar` en cualquier canal de texto.
 
 ## Ajustes Personalizados
-Puedes modificar el tiempo que el bot espera antes de cambiar la visibilidad del canal. Para ello, abre el archivo bot.py y busca la siguiente variable:
-```python
-COOLDOWN_SEGUNDOS = 600
-```
-Cambia `600` por la cantidad de segundos que prefieras (por ejemplo, `300` para 5 minutos). Se recomienda no usar valores excesivamente bajos para evitar limites de tasa (Rate Limits) por parte de la API de Discord.
+Puedes modificar la dificultad y los tiempos editando las siguientes variables directamente en el archivo `bot.py`:´
+- **Probabilidad de exito:** Busca la variable `probabilidad_exito = 7.5` y cambiala al porcentaje que desees (ejemplo: 10 para un 10%).
+- **Tiempo de visibilidad:** Busca la linea `await asyncio.sleep(600)` y cambia `600` (10 minutos) por la cantidad de segundos que la isla debe permanecer visible.
+- **Tiempo de espera (Cooldown):** Busca la linea `@commands.cooldown(1, 1800, commands.BucketType.user)` y cambia `1800` por los segundos de espera entre intentos por usuario (1800 = 30 minutos).
