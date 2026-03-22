@@ -3,8 +3,8 @@
 Un bot de Discord interactivo construido en Python, inspirado en la leyenda canaria de la isla errante. Este bot gestiona un canal de voz oculto que los usuarios deben "descubrir" mediante comandos. Si tienen exito, la isla se revela temporalmente antes de volver a desaparecer y moverse a una nueva ubicacion al azar dentro del servidor.
 
 ## Caracteristicas Principales
-- **Minijuego de exploracion:** Los usuarios utilizan el comando `!explorar` para intentar encontrar la isla, basado en un sistema de probabilidad (por defecto 5% de exito).
-- **Cooldowns individuales:** Limita el uso del comando a una vez cada 30 minutos por usuario para evitar el spam de comandos.
+- **Minijuego de exploracion:** Los usuarios utilizan el comando `!explorar` para intentar encontrar la isla, basado en un sistema de probabilidad (por defecto 7.5% de exito).
+- **Cooldowns individuales:** Limita el uso del comando a una vez cada 20 minutos por usuario para evitar el spam de comandos.
 - **Visibilidad temporal y alertas:** Al ser descubierta, la isla se hace visible durante 10 minutos y notifica a todo el servidor mediante una mencion.
 - **Isla errante:** Cuando la niebla vuelve a cubrir San Borondon (pasados los 10 minutos), el canal se mueve automaticamente a una categoria aleatoria del servidor.
 - **Lista negra de categorias:** Permite excluir categorias especificas (como zonas de administracion o canales de depuracion) mediante configuracion para que el canal nunca aparezca alli.
