@@ -31,6 +31,49 @@ async def on_ready():
         await canal.set_permissions(rol_everyone, view_channel=False)
         print("La isla de San Borondón se ha ocultado al iniciar.")
 
+    if not aparicion_automatica.is_running():
+        aparicion_automatica.start()
+
+# APARICION AUTOMATICA
+@tasks.loop(seconds=1800)
+async def aparicion_pasiva():
+    global is_visible
+    
+    if is_visible:
+        return
+
+    probabilidad_exito = 7.5
+    tirada = random.randint(1, 100)
+
+    if tirada <= probabilidad_exito:
+        is_visible = True
+        
+        canal_voz = bot.get_channel(CANAL_VOZ_ID)
+        
+        if not canal_voz:
+            print("Aviso: Revisa el ID del canal de voz en el .env")
+            is_visible = False
+            return
+
+        rol_everyone = canal_voz.guild.default_role
+        
+        print("San Borondón ha aparecido asi por la cara.")
+        await canal_voz.set_permissions(rol_everyone, view_channel=True)
+        
+        await asyncio.sleep(600)
+        
+        await canal_voz.set_permissions(rol_everyone, view_channel=False)
+        is_visible = False
+        print("San Borondón volvió a desaparecer.")
+        
+        categorias_validas = [cat for cat in canal_voz.guild.categories if cat.name not in CATEGORIAS_PROHIBIDAS]
+
+        if categorias_validas:
+            nueva_categoria = random.choice(categorias_validas)
+            await canal_voz.edit(category=nueva_categoria)
+            print(f"La isla se movió (sola) a la categoría: {nueva_categoria.name}")
+
+# COMANDO EXPLORAR
 @bot.command(name="explorar")
 @commands.cooldown(1, 1200, commands.BucketType.user)
 async def explorar(ctx):
