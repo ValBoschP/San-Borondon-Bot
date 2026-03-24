@@ -36,13 +36,13 @@ async def on_ready():
 
 # APARICION AUTOMATICA
 @tasks.loop(seconds=1800)
-async def aparicion_pasiva():
+async def aparicion_automatica():
     global is_visible
     
     if is_visible:
         return
 
-    probabilidad_exito = 7.5
+    probabilidad_exito = 5
     tirada = random.randint(1, 100)
 
     if tirada <= probabilidad_exito:
