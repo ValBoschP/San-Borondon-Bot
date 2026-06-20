@@ -2,7 +2,7 @@ import discord
 import os
 import random
 import asyncio 
-import json # Nuevo: para guardar el ranking
+import json 
 from discord.ext import commands, tasks
 from dotenv import load_dotenv
 
@@ -17,21 +17,42 @@ CATEGORIAS_PROHIBIDAS = [categoria.strip() for categoria in categorias_texto.spl
 intents = discord.Intents.default()
 intents.message_content = True 
 
-# case_insensitive=True hace que detecte EXPLORAR, explorar, EXplorar...
-bot = commands.Bot(command_prefix='922', intents=intents, case_insensitive=True)
+bot = commands.Bot(command_prefix=['922', '922 '], intents=intents, case_insensitive=True)
 
 is_visible = False
+
+# --- LISTA MODULAR DE EVENTOS ---
+# Para añadir uno nuevo, solo cópialo aquí. 
+# "peso" es la probabilidad de que salga. "tipo" define si te quita el cooldown ("bueno") o no ("malo").
+EVENTOS_FALLO = [
+    {"peso": 5, "tipo": "bueno", "texto": "Pero que leches, {mention}! Un ferry de Fred Olsen pasó a toda hostia y su estela disipó la niebla de golpe. **Puedes volver a usar `922explorar` AHORA MISMO**"},
+    {"peso": 7, "tipo": "malo", "texto": "{mention}, se acaba de meter una calima nivel carnavales 2020. Si apenas puedes respirar, menos vas a ver San Borondón."},
+    {"peso": 7, "tipo": "malo", "texto": "{mention}, se te acercó un guiri perdido en un patinete acuático preguntando dónde está el Siam Park. Perdiste todo el tiempo intentando explicarle."},
+    {"peso": 7, "tipo": "malo", "texto": "{mention}, te paraste a comerte un bocadillo de pata con queso y te olvidaste de buscar."},
+    {"peso": 7, "tipo": "malo", "texto": "{mention}, un choco gigante te acaba de cumear un chorro de tinta directo en la cara. No ves un carajo, espabila."},
+    {"peso": 7, "tipo": "malo", "texto": "{mention}, te quedaste esperando a que pasara la guagua, pero te dejó tirado porque iba llena. Puta titsa siempre la misma mrda"},
+    {"peso": 7, "tipo": "malo", "texto": "{mention}, te cruzaste con una romería. Te dieron un vaso de vino y un pincho de carne fiesta, y se te olvidó por completo lo que estabas buscando."},
+    {"peso": 20, "tipo": "malo", "texto": "{mention} bro no encontraste nada venga."}
+]
+
+PESOS_EVENTOS = [evento["peso"] for evento in EVENTOS_FALLO]
+# ---------------------------------
 
 # --- GESTIÓN DEL RANKING ---
 def cargar_stats():
     if os.path.exists('stats.json'):
-        with open('stats.json', 'r') as f:
-            return json.load(f)
+        try:
+            with open('stats.json', 'r') as f:
+                return json.load(f)
+        except Exception as e:
+            print("Aviso: El archivo stats.json estaba vacío. Empezando de cero.")
+            return {}
     return {}
 
 def guardar_stats(stats):
     with open('stats.json', 'w') as f:
         json.dump(stats, f, indent=4)
+# ---------------------------
 
 @bot.event
 async def on_ready():
@@ -94,17 +115,15 @@ async def explorar(ctx):
         return
 
     probabilidad_exito = 7.5
-    tirada = random.uniform(1, 100) # Usamos uniform para admitir decimales en la tirada
+    tirada = random.uniform(1, 100) 
 
     if tirada <= probabilidad_exito:
         is_visible = True
         
-        # --- GUARDAR EN EL RANKING ---
         stats = cargar_stats()
         user_id = str(ctx.author.id)
         stats[user_id] = stats.get(user_id, 0) + 1
         guardar_stats(stats)
-        # -----------------------------
 
         await ctx.send(f"Que locura, {ctx.author.mention}. Encontraste a San Borondon, brutal. \n**Tienen 10 minutos para entrar al canal antes de que vuelva a desaparecer**")
         
@@ -126,22 +145,30 @@ async def explorar(ctx):
         await ctx.send("La niebla tal ha vuelto, no se ve un carajo. San Borondón ha desaparecido")
         
     else:
-        await ctx.send(f"{ctx.author.mention} bro no encontraste nada venga.")
+        # --- GESTOR DE EVENTOS ---
+        evento_elegido = random.choices(EVENTOS_FALLO, weights=PESOS_EVENTOS, k=1)[0]
+        
+        mensaje_final = evento_elegido["texto"].format(mention=ctx.author.mention)
+        
+        if evento_elegido["tipo"] == "bueno":
+            ctx.command.reset_cooldown(ctx)
+            
+        await ctx.send(mensaje_final)
+        # ---------------------------------
 
-# NUEVO COMANDO: RANKING
+# COMANDO RANKING
 @bot.command(name="ranking")
 async def ranking(ctx):
     stats = cargar_stats()
     if not stats:
-        await ctx.send("Nadie ha encontrado la isla todavía, están todos en la mierda.")
+        await ctx.send("Nadie ha encontrado la isla todavía, están todos perdidos.")
         return
 
-    # Ordenar por número de hallazgos
     ranking_ordenado = sorted(stats.items(), key=lambda item: item[1], reverse=True)
     
-    mensaje = "🏆 **RANKING DE LOS TAL DE SAN BORONDÓN** 🏆\n"
+    mensaje = "🏆 **RANKING DE EXPLORADORES DE SAN BORONDÓN** 🏆\n"
     for i, (user_id, puntos) in enumerate(ranking_ordenado[:10], start=1):
-        mensaje += f"{i}. <@{user_id}> - {puntos} veces encontrada\n"
+        mensaje += f"**{i}.** <@{user_id}> - {puntos} veces encontrada\n"
     
     await ctx.send(mensaje)
 
@@ -150,6 +177,6 @@ async def explorar_error(ctx, error):
     if isinstance(error, commands.CommandOnCooldown):
         minutos = int(error.retry_after // 60)
         segundos = int(error.retry_after % 60)
-        await ctx.send(f"{ctx.author.name} estas cansao hermano, para un poco y tal, tipo mas o menos **{minutos} minutos y {segundos} segundos**")
+        await ctx.send(f"{ctx.author.mention} estás cansao hermano, para un poco y tal. Vuelve a intentarlo en **{minutos} minutos y {segundos} segundos**.")
 
 bot.run(TOKEN)
