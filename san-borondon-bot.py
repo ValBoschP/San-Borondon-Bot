@@ -177,6 +177,6 @@ async def explorar_error(ctx, error):
     if isinstance(error, commands.CommandOnCooldown):
         minutos = int(error.retry_after // 60)
         segundos = int(error.retry_after % 60)
-        await ctx.send(f"{ctx.author.mention} estás cansao hermano, para un poco y tal. Vuelve a intentarlo en **{minutos} minutos y {segundos} segundos**.")
+        await ctx.send(f"{ctx.author.mention} estas cansao hermano, para un poco y tal, tipo mas o menos **{minutos} minutos y {segundos} segundos**.")
 
 bot.run(TOKEN)
