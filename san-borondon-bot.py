@@ -22,8 +22,6 @@ bot = commands.Bot(command_prefix=['922', '922 '], intents=intents, case_insensi
 is_visible = False
 
 # --- LISTA MODULAR DE EVENTOS ---
-# Para añadir uno nuevo, solo cópialo aquí. 
-# "peso" es la probabilidad de que salga. "tipo" define si te quita el cooldown ("bueno") o no ("malo").
 EVENTOS_FALLO = [
     {"peso": 5, "tipo": "bueno", "texto": "Pero que leches, {mention}! Un ferry de Fred Olsen pasó a toda hostia y su estela disipó la niebla de golpe. **Puedes volver a usar `922explorar` AHORA MISMO**"},
     {"peso": 7, "tipo": "malo", "texto": "{mention}, se acaba de meter una calima nivel carnavales 2020. Si apenas puedes respirar, menos vas a ver San Borondón."},
@@ -81,27 +79,30 @@ async def aparicion_automatica():
 
     if tirada <= probabilidad_exito:
         is_visible = True
-        canal_voz = bot.get_channel(CANAL_VOZ_ID)
-        
-        if not canal_voz:
-            print("Aviso: Revisa el ID del canal de voz en el .env")
-            is_visible = False
-            return
+        try:
+            canal_voz = bot.get_channel(CANAL_VOZ_ID) or await bot.fetch_channel(CANAL_VOZ_ID)
+            
+            if not canal_voz:
+                print("Aviso: Revisa el ID del canal de voz en el .env")
+                return
 
-        rol_everyone = canal_voz.guild.default_role
-        print("San Borondón ha aparecido asi por la cara.")
-        await canal_voz.set_permissions(rol_everyone, view_channel=True)
-        
-        await asyncio.sleep(600)
-        
-        await canal_voz.set_permissions(rol_everyone, view_channel=False)
-        is_visible = False
-        print("San Borondón volvió a desaparecer.")
-        
-        categorias_validas = [cat for cat in canal_voz.guild.categories if cat.name not in CATEGORIAS_PROHIBIDAS]
-        if categorias_validas:
-            nueva_categoria = random.choice(categorias_validas)
-            await canal_voz.edit(category=nueva_categoria)
+            rol_everyone = canal_voz.guild.default_role
+            print("San Borondón ha aparecido así por la cara.")
+            await canal_voz.set_permissions(rol_everyone, view_channel=True)
+            
+            await asyncio.sleep(600)
+            
+            await canal_voz.set_permissions(rol_everyone, view_channel=False)
+            print("San Borondón volvió a desaparecer.")
+            
+            categorias_validas = [cat for cat in canal_voz.guild.categories if cat.name not in CATEGORIAS_PROHIBIDAS]
+            if categorias_validas:
+                nueva_categoria = random.choice(categorias_validas)
+                await canal_voz.edit(category=nueva_categoria)
+        except Exception as e:
+            print(f"Error en aparición automática: {e}")
+        finally:
+            is_visible = False
 
 # COMANDO EXPLORAR
 @bot.command(name="explorar")
@@ -119,30 +120,42 @@ async def explorar(ctx):
 
     if tirada <= probabilidad_exito:
         is_visible = True
-        
-        stats = cargar_stats()
-        user_id = str(ctx.author.id)
-        stats[user_id] = stats.get(user_id, 0) + 1
-        guardar_stats(stats)
+        try:
+            stats = cargar_stats()
+            user_id = str(ctx.author.id)
+            stats[user_id] = stats.get(user_id, 0) + 1
+            guardar_stats(stats)
 
-        await ctx.send(f"Que locura, {ctx.author.mention}. Encontraste a San Borondon, brutal. \n**Tienen 10 minutos para entrar al canal antes de que vuelva a desaparecer**")
-        
-        canal = bot.get_channel(CANAL_VOZ_ID)
-        rol_everyone = ctx.guild.default_role
-        await canal.set_permissions(rol_everyone, view_channel=True)
-        
-        await asyncio.sleep(600)
-        
-        await canal.set_permissions(rol_everyone, view_channel=False)
-        is_visible = False
+            await ctx.send(f"Que locura, {ctx.author.mention}. Encontraste a San Borondon, brutal. \n**Tienen 10 minutos para entrar al canal antes de que vuelva a desaparecer**")
+            
+            canal = bot.get_channel(CANAL_VOZ_ID)
+            if not canal:
+                try:
+                    canal = await bot.fetch_channel(CANAL_VOZ_ID)
+                except Exception:
+                    canal = None
 
-        categorias_validas = [cat for cat in ctx.guild.categories if cat.name not in CATEGORIAS_PROHIBIDAS]
-        if categorias_validas:
-            nueva_categoria = random.choice(categorias_validas)
-            await canal.edit(category=nueva_categoria)
-            print(f"La isla ha se movió a la categoría: {nueva_categoria.name}")
+            if canal:
+                rol_everyone = ctx.guild.default_role
+                await canal.set_permissions(rol_everyone, view_channel=True)
+                
+                await asyncio.sleep(600)
+                
+                await canal.set_permissions(rol_everyone, view_channel=False)
 
-        await ctx.send("La niebla tal ha vuelto, no se ve un carajo. San Borondón ha desaparecido")
+                categorias_validas = [cat for cat in ctx.guild.categories if cat.name not in CATEGORIAS_PROHIBIDAS]
+                if categorias_validas:
+                    nueva_categoria = random.choice(categorias_validas)
+                    await canal.edit(category=nueva_categoria)
+                    print(f"La isla se movió a la categoría: {nueva_categoria.name}")
+
+                await ctx.send("La niebla tal ha vuelto, no se ve un carajo. San Borondón ha desaparecido")
+            else:
+                print("Error: No se encontró el canal de voz especificado.")
+        except Exception as e:
+            print(f"Error procesando el descubrimiento de la isla: {e}")
+        finally:
+            is_visible = False
         
     else:
         # --- GESTOR DE EVENTOS ---
@@ -154,7 +167,6 @@ async def explorar(ctx):
             ctx.command.reset_cooldown(ctx)
             
         await ctx.send(mensaje_final)
-        # ---------------------------------
 
 # COMANDO RANKING
 @bot.command(name="ranking")
@@ -177,6 +189,6 @@ async def explorar_error(ctx, error):
     if isinstance(error, commands.CommandOnCooldown):
         minutos = int(error.retry_after // 60)
         segundos = int(error.retry_after % 60)
-        await ctx.send(f"{ctx.author.mention} estas cansao hermano, para un poco y tal, tipo mas o menos **{minutos} minutos y {segundos} segundos**.")
+        await ctx.send(f"{ctx.author.mention} vayeyi estas cansao hermano, para un poco y tal, tipo mas o menos **{minutos} minutos y {segundos} segundos**.")
 
 bot.run(TOKEN)
