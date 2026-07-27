@@ -115,7 +115,7 @@ async def explorar(ctx):
         await ctx.send("Mi hermano espabila que ya está visible sabes")
         return
 
-    probabilidad_exito = 7.5
+    probabilidad_exito = 10
     tirada = random.uniform(1, 100) 
 
     if tirada <= probabilidad_exito:
@@ -189,6 +189,6 @@ async def explorar_error(ctx, error):
     if isinstance(error, commands.CommandOnCooldown):
         minutos = int(error.retry_after // 60)
         segundos = int(error.retry_after % 60)
-        await ctx.send(f"{ctx.author.mention} vayeyi estas cansao hermano, para un poco y tal, tipo mas o menos **{minutos} minutos y {segundos} segundos**.")
+        await ctx.send(f"{ctx.author.mention} estas cansao hermano, para un poco y tal, tipo mas o menos **{minutos} minutos y {segundos} segundos**.")
 
 bot.run(TOKEN)
